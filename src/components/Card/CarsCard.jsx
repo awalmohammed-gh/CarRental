@@ -7,7 +7,7 @@ const CarsCard = ({ deCars }) => {
   const [isWishlisted, setIsWishlisted] = useState(false);
 
   return (
-    <Link to={`/cars-details/${id}`} className="block group">
+    <Link onClick={() => window.scrollTo(0,0)} to={`/cars-details/${id}`} className="block group">
       <div className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
         {/* Image Container */}
         <div className="relative overflow-hidden h-48 md:h-56">
