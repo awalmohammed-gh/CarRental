@@ -1,56 +1,66 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Fuel, Users, Settings, Calendar, Heart } from 'lucide-react';
 import { useState } from 'react';
 
 const CarsCard = ({ deCars }) => {
   const { id, brand, name, price, status, transmission, fuelType, seats, images } = deCars;
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const navigate = useNavigate()
 
   return (
-    <Link onClick={() => window.scrollTo(0,0)} to={`/cars-details/${id}`} className="block group">
+    <Link
+      onClick={() => window.scrollTo(0, 0)}
+      to={`/cars-details/${id}`}
+      className="block group"
+    >
       <div className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
         {/* Image Container */}
         <div className="relative overflow-hidden h-48 md:h-56">
-          <img 
-            src={images[0]} 
+          <img
+            src={images[0]}
             alt={`${brand} ${name}`}
             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
           />
-          
+
           {/* Status Badge */}
           {status && (
-            <span className={`absolute top-3 left-3 px-3 py-1 text-xs font-semibold rounded-full ${
-              status === 'Available' 
-                ? 'bg-green-500 text-white' 
-                : status === 'Rented' 
-                ? 'bg-red-500 text-white'
-                : 'bg-[#F59E0B] text-white'
-            }`}>
+            <span
+              className={`absolute top-3 left-3 px-3 py-1 text-xs font-semibold rounded-full ${
+                status === "Available"
+                  ? "bg-green-500 text-white"
+                  : status === "Rented"
+                    ? "bg-red-500 text-white"
+                    : "bg-[#F59E0B] text-white"
+              }`}
+            >
               {status}
             </span>
           )}
-          
+
           {/* Wishlist Button */}
-          <button 
+          <button
             onClick={(e) => {
               e.preventDefault();
               setIsWishlisted(!isWishlisted);
             }}
             className="absolute top-3 right-3 p-2 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition-all duration-200"
           >
-            <Heart 
+            <Heart
               className={`w-4 h-4 transition-colors ${
-                isWishlisted ? 'fill-red-500 text-red-500' : 'text-[#1E293B]'
+                isWishlisted ? "fill-red-500 text-red-500" : "text-[#1E293B]"
               }`}
             />
           </button>
-          
+
           {/* Price Tag */}
           <div className="absolute bottom-3 right-3 bg-[#2563EB] text-white px-3 py-1 rounded-lg font-bold text-lg">
-            ${price}<span className="text-xs font-normal">{status === "Rent" && "/day"}</span>
+            ${price}
+            <span className="text-xs font-normal">
+              {status === "Rent" && "/day"}
+            </span>
           </div>
         </div>
-        
+
         {/* Content Container */}
         <div className="p-4">
           {/* Brand & Name */}
@@ -62,7 +72,7 @@ const CarsCard = ({ deCars }) => {
               {name}
             </h2>
           </div>
-          
+
           {/* Features Grid */}
           <div className="grid grid-cols-3 gap-2 mb-4 pt-3 border-t border-slate-100">
             <div className="flex items-center gap-1 text-xs text-[#0F172A]/70">
@@ -78,16 +88,18 @@ const CarsCard = ({ deCars }) => {
               <span>{seats} Seats</span>
             </div>
           </div>
-          
+
           {/* Rent Now Button */}
-          <button 
+          <button
             onClick={(e) => {
               e.preventDefault();
               // Handle rent now action
+               window.scrollTo(0, 0)
+              navigate(`/cars-details/${id}`)
             }}
             className="w-full py-2 bg-[#F59E0B] text-white font-semibold rounded-lg hover:bg-[#D97706] transition-all duration-300 transform hover:scale-[1.02]"
           >
-            {status === "Sell" ? "Buy Now":"Rent Now"}
+            {status === "Sell" ? "Buy Now" : "Rent Now"}
           </button>
         </div>
       </div>

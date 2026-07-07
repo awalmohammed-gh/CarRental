@@ -2,7 +2,7 @@ import { useState } from "react";
 import useFetch from "../hooks/useFetch";
 import CarsCard from "../components/Card/CarsCard";
 import { Filter, X, ChevronDown, Car, DollarSign, Tag, Search } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import AdvertTwo from "../components/Landing/AdvertTwo";
 
 const Cars = () => {
@@ -84,7 +84,7 @@ const priceRanges = [
       {/* Hero Section */}
      <div className="relative">
        <div className="bg-fixed bg-[url('/images/carBg.jpg')] bg-no-repeat bg-cover bg-center h-[40vh] md:h-[60vh] flex items-center justify-center">
-        <div className="absolute inset-0 bg-gradient-to-b from-black/70 to-black/60"></div>
+        <div className="absolute inset-0 bg-linear-to-b from-black/70 to-black/60"></div>
         <div className="relative z-10 text-center text-white px-4 max-w-3xl">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -131,7 +131,7 @@ const priceRanges = [
         <div className="flex flex-col md:flex-row gap-8">
           
           {/* Sidebar Filters */}
-          <div className={`${isFilterOpen ? 'block' : 'hidden'} md:block md:w-80 flex-shrink-0`}>
+          <div className={`${isFilterOpen ? 'block' : 'hidden'} md:block md:w-80 shrink-0`}>
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
