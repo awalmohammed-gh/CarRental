@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   Car,
@@ -9,6 +9,8 @@ import {
   LogOut,
   Package2Icon,
 } from "lucide-react";
+import apis from "../../../api/apis";
+import toast from "react-hot-toast";
 
 const Sidebar = () => {
   const navLinks = [
@@ -20,6 +22,23 @@ const Sidebar = () => {
     { name: "Dealers", path: "/admin/dealers", icon: Store },
     { name: "Subscription", path: "/admin/subscription", icon: CreditCard },
   ];
+  const navigate = useNavigate()
+
+
+  const adminLogout = async() =>{
+    try {
+      const { data } = await apis.post("/admin-logout");
+      if(data.success){
+        navigate("/admin-login")
+        toast.success(data.message)
+      }else{
+        toast.error(data.message)
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error(error?.response?.data?.message)
+    }
+  }
 
   return (
     <div className="h-screen w-64 bg-white shadow-lg flex flex-col fixed left-0 top-0">
@@ -54,6 +73,7 @@ const Sidebar = () => {
       {/* Bottom Section with Logout Button */}
       <div className="p-4 border-t border-gray-200">
         <button
+        onClick={adminLogout}
           className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-all duration-200"
           style={{
             backgroundColor: "#F59E0B",

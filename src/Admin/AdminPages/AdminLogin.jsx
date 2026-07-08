@@ -1,5 +1,8 @@
 import React, { useState } from "react";
 import { Mail, Lock, Eye, EyeOff, LogIn, Shield, Car } from "lucide-react";
+import apis from "../../../api/apis";
+import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
 
 const AdminLogin = () => {
   const [formData, setFormData] = useState({
@@ -9,6 +12,7 @@ const AdminLogin = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -20,33 +24,35 @@ const AdminLogin = () => {
     if (error) setError("");
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
+  const handleSubmit = async (e) => {
+    try {
+      e.preventDefault();
+      setLoading(true);
+      setError("");
 
-    // Basic validation
-    if (!formData.email || !formData.password) {
-      setError("Please fill in all fields");
-      setLoading(false);
-      return;
-    }
-
-    // Simulate API call
-    setTimeout(() => {
-      // Demo credentials - in real app, validate with backend
-      if (
-        formData.email === "admin@example.com" &&
-        formData.password === "admin123"
-      ) {
-        console.log("Login successful");
-        // Redirect to admin dashboard
-        window.location.href = "/admin";
-      } else {
-        setError("Invalid email or password");
+      // Basic validation
+      if (!formData.email || !formData.password) {
+        setError("Please fill in all fields");
+        setLoading(false);
+        return;
       }
+
+      const { data } = await apis.post("/admin/admin-login", formData);
+      if (data.success) {
+        navigate("/admin");
+        toast.success(data.message);
+      } else {
+        setError(data.message);
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error(
+        error?.response?.data?.message ||
+        "Something went wrong. Please try again.",
+      );
+    } finally {
       setLoading(false);
-    }, 1500);
+    }
   };
 
   return (
@@ -129,20 +135,6 @@ const AdminLogin = () => {
               </div>
             </div>
 
-            {/* Remember Me */}
-            <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 text-sm text-gray-600">
-                <input
-                  type="checkbox"
-                  className="w-4 h-4 text-[#9810fa] border-gray-300 rounded focus:ring-[#9810fa]/20"
-                />
-                Remember me
-              </label>
-              <span className="text-xs text-gray-400">
-                Demo: admin@example.com / admin123
-              </span>
-            </div>
-
             {/* Login Button */}
             <button
               type="submit"
@@ -150,10 +142,7 @@ const AdminLogin = () => {
               className="w-full py-3 px-4 bg-[#9810fa] text-white rounded-lg font-medium hover:bg-[#7a0cc9] transition-all flex items-center justify-center gap-2 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
-                <>
-                  
-                  Signing in...
-                </>
+                <>Signing in...</>
               ) : (
                 <>
                   <LogIn size={20} />
@@ -168,20 +157,6 @@ const AdminLogin = () => {
             <p className="text-xs text-gray-400">
               Secure admin access • All rights reserved
             </p>
-          </div>
-        </div>
-
-        {/* Demo Credentials */}
-        <div className="mt-4 text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur-sm rounded-lg shadow-sm border border-gray-200">
-            <Shield size={14} className="text-[#9810fa]" />
-            <span className="text-xs text-gray-500">
-              Demo:{" "}
-              <span className="font-medium text-gray-700">
-                admin@example.com
-              </span>{" "}
-              / <span className="font-medium text-gray-700">admin123</span>
-            </span>
           </div>
         </div>
       </div>

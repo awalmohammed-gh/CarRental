@@ -9,17 +9,23 @@ export const CarRentalProvider = ({children}) => {
   const [addCar, setAddCar] = useState([]);
   const [buyList, setBuyList] = useState([]);
   const [rentals, setRentals] = useState([]);
+    const [currentState, setCurrentState] = useState("login");
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  console.log(addCar);
-  console.log(rentals);
 
-    const carData ={
-        Cars,
-        error,
-        loading,
-        addCar, setAddCar,
-        rentals, setRentals
-    }
+    const carData = {
+      Cars,
+      error,
+      loading,
+      addCar,
+      setAddCar,
+      rentals,
+      setRentals,
+      currentState,
+      setCurrentState,
+      isLoggedIn,
+      setIsLoggedIn,
+    };
 
   return (
     <CarRentalContext.Provider value={carData}>

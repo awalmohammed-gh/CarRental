@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import {
   Heart,
   User,
@@ -15,14 +15,20 @@ import {
   Settings,
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
+import { useCarRental } from "../context/CarRentalProvider";
+import apis from "../../api/apis";
+import toast from "react-hot-toast";
 
 const Navbar = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { currentState, setCurrentState, isLoggedIn, setIsLoggedIn } =
+    useCarRental();
   const [isDealer, setIsDealer] = useState(false);
   const [openUser, setOpenUser] = useState(false);
   const [showMobile, setShowMobile] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const userMenuRef = useRef(null);
+
+  const navigate = useNavigate();
 
   const navLinks = [
     { name: "Home", path: "/" },
@@ -92,22 +98,38 @@ const Navbar = () => {
     }
   };
 
-  const handleLogout = () => {
-    setIsLoggedIn(false);
-    setIsDealer(false);
-    setOpenUser(false);
-    // Add any additional logout logic here (clear tokens, etc.)
+  const handleLogout = async () => {
+    try {
+      const { data } = await apis.post("/user/logout");
+      if (data.success) {
+        toast.success(data.message);
+        setIsLoggedIn(false);
+        setIsDealer(false);
+        setOpenUser(false);
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message ||
+          "Something went wrong. Please try again.",
+      );
+    }
   };
 
   const handleSignIn = () => {
     setIsLoggedIn(true);
     setOpenUser(false);
+    navigate("/login");
+    setCurrentState("login");
     // Add your sign-in logic here
   };
 
   const handleSignUp = () => {
     setIsLoggedIn(true);
     setOpenUser(false);
+    setCurrentState("signup");
+    navigate("/login");
     // Add your sign-up logic here
   };
 
@@ -230,7 +252,7 @@ const Navbar = () => {
                 }`}
               >
                 {/* User Info Header */}
-                <div className="px-6 py-4 bg-gradient-to-r from-[#2563EB]/5 to-[#F59E0B]/5 border-b border-slate-100">
+                <div className="px-6 py-4 bg-linear-to-r from-[#2563EB]/5 to-[#F59E0B]/5 border-b border-slate-100">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-semibold text-[#0F172A]">

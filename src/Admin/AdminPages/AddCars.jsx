@@ -5,10 +5,14 @@ import {
   X,
   Plus,
   Save,
-  Trash2,
   Image as ImageIcon,
   Info,
+  CheckCircle,
+  AlertCircle,
+  DollarSign,
+  Tag,
 } from "lucide-react";
+import apis from "../../../api/apis";
 
 const AddCars = () => {
   const [formData, setFormData] = useState({
@@ -31,6 +35,9 @@ const AddCars = () => {
   const [images, setImages] = useState([]);
   const [preview, setPreview] = useState([]);
   const [featureInput, setFeatureInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   const handleChanges = (e) => {
     const { name, value, checked, type } = e.target;
@@ -39,11 +46,18 @@ const AddCars = () => {
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
+
+    // Clear messages when user types
+    if (successMessage) setSuccessMessage("");
+    if (errorMessage) setErrorMessage("");
   };
 
   const handleImages = (e) => {
     const files = Array.from(e.target.files ?? []);
     setImages((prev) => [...prev, ...files]);
+    // Clear messages
+    if (successMessage) setSuccessMessage("");
+    if (errorMessage) setErrorMessage("");
   };
 
   const handleRemoveImage = (index) => {
@@ -51,10 +65,12 @@ const AddCars = () => {
   };
 
   const handleAddFeature = () => {
-    if (featureInput.trim()) {
+    const feature = featureInput.trim();
+
+    if (feature && !formData.features.includes(feature)) {
       setFormData((prev) => ({
         ...prev,
-        features: [...prev.features, featureInput.trim()],
+        features: [...prev.features, feature],
       }));
       setFeatureInput("");
     }
@@ -67,11 +83,68 @@ const AddCars = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Form Data:", formData);
-    console.log("Images:", images);
-    // Add your API call here
+    setLoading(true);
+    setSuccessMessage("");
+    setErrorMessage("");
+
+    try {
+      const form = new FormData();
+
+      Object.entries(formData).forEach(([key, value]) => {
+        if (key === "features") {
+          form.append(key, JSON.stringify(value));
+        } else {
+          form.append(key, value);
+        }
+      });
+
+      images.forEach((img) => {
+        form.append("images", img);
+      });
+
+      const { data } = await apis.post("/car/add-car", form);
+
+      if (data.success) {
+        setSuccessMessage(data.message || "Car added successfully!");
+
+        // Reset form
+        setFormData({
+          name: "",
+          brand: "",
+          model: "",
+          year: "",
+          price: "",
+          status: "available",
+          category: "",
+          transmission: "",
+          fuelType: "",
+          seats: "",
+          location: "",
+          availability: false,
+          description: "",
+          features: [],
+        });
+        setImages([]);
+        setPreview([]);
+        setFeatureInput("");
+
+        // Auto-hide success message after 5 seconds
+        setTimeout(() => {
+          setSuccessMessage("");
+        }, 5000);
+      } else {
+        setErrorMessage(data.message || "Failed to add car. Please try again.");
+      }
+    } catch (error) {
+      console.error(error);
+      setErrorMessage(
+        error.response?.data?.message || "An error occurred. Please try again.",
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -87,22 +160,120 @@ const AddCars = () => {
     };
   }, [images]);
 
+  // Check if status is "sell"
+  const isSellStatus = formData.status === "sell";
+  const isRentStatus =
+    formData.status === "available" || formData.status === "rented";
+
+  // Get price field label and placeholder based on status
+  const getPriceConfig = () => {
+    if (isSellStatus) {
+      return {
+        label: "Selling Price (₵) *",
+        placeholder: "e.g., 85000",
+        icon: Tag,
+        helpText: "Set the selling price for this car",
+      };
+    } else {
+      return {
+        label: "Price Per Day (₵) *",
+        placeholder: "e.g., 450",
+        icon: DollarSign,
+        helpText: "Set the daily rental price for this car",
+      };
+    }
+  };
+
+  const priceConfig = getPriceConfig();
+  const PriceIcon = priceConfig.icon;
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold text-gray-800">Add New Car</h2>
-          <p className="text-gray-500 text-sm">List a new vehicle for rental</p>
+          <p className="text-gray-500 text-sm">
+            List a new vehicle for rental or sale
+          </p>
         </div>
         <button
           onClick={handleSubmit}
-          className="px-6 py-2 bg-[#9810fa] text-white rounded-lg hover:bg-[#7a0cc9] transition-colors flex items-center gap-2 shadow-sm"
+          disabled={loading}
+          className="px-6 py-2 bg-[#9810fa] text-white rounded-lg hover:bg-[#7a0cc9] transition-colors flex items-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <Save size={18} />
-          Save Car
+          {loading ? (
+            <>
+              <svg
+                className="animate-spin h-5 w-5 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+              Saving...
+            </>
+          ) : (
+            <>
+              <Save size={18} />
+              Save Car
+            </>
+          )}
         </button>
       </div>
+
+      {/* Success Message */}
+      {successMessage && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-start gap-3 animate-slideDown">
+          <CheckCircle
+            size={20}
+            className="text-green-600 shrink-0 mt-0.5"
+          />
+          <div className="flex-1">
+            <p className="text-sm font-medium text-green-800">Success!</p>
+            <p className="text-sm text-green-700">{successMessage}</p>
+          </div>
+          <button
+            onClick={() => setSuccessMessage("")}
+            className="text-green-600 hover:text-green-800 transition-colors"
+          >
+            <X size={18} />
+          </button>
+        </div>
+      )}
+
+      {/* Error Message */}
+      {errorMessage && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3 animate-slideDown">
+          <AlertCircle
+            size={20}
+            className="text-red-600 shrink-0 mt-0.5"
+          />
+          <div className="flex-1">
+            <p className="text-sm font-medium text-red-800">Error!</p>
+            <p className="text-sm text-red-700">{errorMessage}</p>
+          </div>
+          <button
+            onClick={() => setErrorMessage("")}
+            className="text-red-600 hover:text-red-800 transition-colors"
+          >
+            <X size={18} />
+          </button>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -248,20 +419,6 @@ const AddCars = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Price Per Day (₵) *
-                  </label>
-                  <input
-                    type="number"
-                    name="price"
-                    value={formData.price}
-                    onChange={handleChanges}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#9810fa]/20 focus:border-[#9810fa] transition-all"
-                    placeholder="e.g., 450"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
                     Location *
                   </label>
                   <input
@@ -325,38 +482,79 @@ const AddCars = () => {
 
           {/* Sidebar - 1 column */}
           <div className="space-y-6">
-            {/* Status & Availability */}
+            {/* Status & Pricing */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-              <h3 className="font-semibold text-gray-800 mb-4">Status</h3>
+              <h3 className="font-semibold text-gray-800 mb-4">
+                Status & Pricing
+              </h3>
               <div className="space-y-3">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Status
+                    Status *
                   </label>
                   <select
                     name="status"
                     value={formData.status}
                     onChange={handleChanges}
                     className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#9810fa]/20 focus:border-[#9810fa] transition-all"
+                    required
                   >
-                    <option value="available">Available</option>
-                    <option value="rented">Rented</option>
-                    <option value="maintenance">Maintenance</option>
-                    <option value="unavailable">Unavailable</option>
+                    <option value="available">Available for Rent</option>
+                    <option value="sell">Available for Sale</option>
                   </select>
                 </div>
-                <div className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    name="availability"
-                    checked={formData.availability}
-                    onChange={handleChanges}
-                    className="w-4 h-4 text-[#9810fa] border-gray-300 rounded focus:ring-[#9810fa]/20"
-                  />
-                  <label className="text-sm text-gray-700">
-                    Available for rental
+
+                {/* Dynamic Price Field */}
+                <div className="animate-slideDown">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    {priceConfig.label}
                   </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <PriceIcon size={18} className="text-gray-400" />
+                    </div>
+                    <input
+                      type="number"
+                      name="price"
+                      value={formData.price}
+                      onChange={handleChanges}
+                      className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#9810fa]/20 focus:border-[#9810fa] transition-all"
+                      placeholder={priceConfig.placeholder}
+                      required
+                    />
+                  </div>
+                  <p className="text-xs text-gray-400 mt-1">
+                    {priceConfig.helpText}
+                  </p>
                 </div>
+
+                {/* Availability Checkbox - Only for Rent */}
+                {isRentStatus && (
+                  <div className="flex items-center gap-3 pt-2 border-t border-gray-100">
+                    <input
+                      type="checkbox"
+                      name="availability"
+                      checked={formData.availability}
+                      onChange={handleChanges}
+                      className="w-4 h-4 text-[#9810fa] border-gray-300 rounded focus:ring-[#9810fa]/20"
+                    />
+                    <label className="text-sm text-gray-700">
+                      Available for rental
+                    </label>
+                  </div>
+                )}
+
+                {/* Status indicator for Sell */}
+                {isSellStatus && (
+                  <div className="pt-2 border-t border-gray-100">
+                    <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
+                      <p className="text-xs text-purple-700 flex items-center gap-2">
+                        <Tag size={14} />
+                        This car will be listed for sale
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -438,19 +636,88 @@ const AddCars = () => {
         <div className="flex justify-end gap-4">
           <button
             type="reset"
+            onClick={() => {
+              setFormData({
+                name: "",
+                brand: "",
+                model: "",
+                year: "",
+                price: "",
+                status: "available",
+                category: "",
+                transmission: "",
+                fuelType: "",
+                seats: "",
+                location: "",
+                availability: false,
+                description: "",
+                features: [],
+              });
+              setImages([]);
+              setPreview([]);
+              setFeatureInput("");
+              setSuccessMessage("");
+              setErrorMessage("");
+            }}
             className="px-6 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
           >
             Clear All
           </button>
           <button
             type="submit"
-            className="px-6 py-2 bg-[#9810fa] text-white rounded-lg hover:bg-[#7a0cc9] transition-colors flex items-center gap-2 shadow-sm"
+            disabled={loading}
+            className="px-6 py-2 bg-[#9810fa] text-white rounded-lg hover:bg-[#7a0cc9] transition-colors flex items-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Save size={18} />
-            Add Car
+            {loading ? (
+              <>
+                <svg
+                  className="animate-spin h-5 w-5 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                Adding...
+              </>
+            ) : (
+              <>
+                <Save size={18} />
+                Add Car
+              </>
+            )}
           </button>
         </div>
       </form>
+
+      {/* Add animation styles */}
+      <style jsx>{`
+        @keyframes slideDown {
+          from {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-slideDown {
+          animation: slideDown 0.3s ease-out;
+        }
+      `}</style>
     </div>
   );
 };
